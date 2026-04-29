@@ -3,9 +3,9 @@
 namespace App\Entities;
 
 use Doctrine\ORM\Mapping as ORM;
-use App\Repositories\PostRepository; //  ADD THIS
+use App\Repositories\PostRepository;
 
-#[ORM\Entity(repositoryClass: PostRepository::class)] // FIXED
+#[ORM\Entity(repositoryClass: PostRepository::class)]
 #[ORM\Table(name: "posts")]
 class Post
 {
@@ -19,6 +19,9 @@ class Post
 
     #[ORM\Column(type: "text")]
     private string $content;
+
+    #[ORM\Column(type: "datetime", nullable: true)]
+    private ?\DateTime $deletedAt = null;
 
     public function getId(): ?int
     {
@@ -43,5 +46,15 @@ class Post
     public function setContent(string $content): void
     {
         $this->content = $content;
+    }
+
+    public function getDeletedAt(): ?\DateTime
+    {
+        return $this->deletedAt;
+    }
+
+    public function setDeletedAt(?\DateTime $deletedAt): void
+    {
+        $this->deletedAt = $deletedAt;
     }
 }
