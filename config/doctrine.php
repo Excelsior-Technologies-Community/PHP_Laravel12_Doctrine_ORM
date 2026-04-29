@@ -27,7 +27,7 @@ return [
     'managers'                   => [
         'default' => [
             'dev'           => env('APP_DEBUG', false),
-            'meta'          => env('DOCTRINE_METADATA', 'attributes'),
+            'meta' => 'attributes',
             'connection'    => env('DB_CONNECTION', 'mysql'),
             'paths'         => [
                 base_path('app/Entities')

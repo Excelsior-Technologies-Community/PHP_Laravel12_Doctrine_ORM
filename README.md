@@ -531,5 +531,8 @@ PHP_Laravel12_Doctrine_ORM/
 ------------------------------------------------------------------------
 
 Your PHP_Laravel12_Doctrine_ORM Project is now ready!
+<<<<<<< HEAD
 
 
+=======
+>>>>>>> development
