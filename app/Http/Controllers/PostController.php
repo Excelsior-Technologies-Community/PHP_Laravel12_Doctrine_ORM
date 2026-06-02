@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Entities\Post;
 use Doctrine\ORM\EntityManagerInterface;
+use Doctrine\ORM\Tools\Pagination\Paginator;
 
 class PostController extends Controller
 {
@@ -12,45 +13,55 @@ class PostController extends Controller
     {
     }
 
-    // =========================
-    // INDEX
-    // =========================
     public function index(Request $request)
     {
-        $qb = $this->em->createQueryBuilder();
+        $page = $request->query('page', 1);
+        $limit = 10;
+        $offset = ($page - 1) * $limit;
 
+        $qb = $this->em->createQueryBuilder();
         $qb->select('p')
-            ->from(Post::class, 'p')
-            ->where('p.deletedAt IS NULL')
-            ->orderBy('p.id', 'DESC');
+            ->from(Post::class, 'p');
+
+        if ($request->query('trash') === 'true') {
+            $qb->where('p.deletedAt IS NOT NULL');
+        } else {
+            $qb->where('p.deletedAt IS NULL');
+        }
+
+        $qb->orderBy('p.id', 'DESC');
 
         if ($request->search) {
-
             $qb->andWhere(
                 $qb->expr()->orX(
                     'p.title LIKE :search',
                     'p.content LIKE :search'
                 )
             )
-                ->setParameter('search', '%' . $request->search . '%');
+            ->setParameter('search', '%' . $request->search . '%');
         }
 
-        $posts = $qb->getQuery()->getResult();
+        $qb->setFirstResult($offset)
+           ->setMaxResults($limit);
 
-        return view('posts.index', compact('posts'));
+        $query = $qb->getQuery();
+        $paginator = new Paginator($query);
+        $totalItems = count($paginator);
+        $totalPages = ceil($totalItems / $limit);
+
+        $posts = [];
+        foreach ($paginator as $post) {
+            $posts[] = $post;
+        }
+
+        return view('posts.index', compact('posts', 'page', 'totalPages', 'totalItems'));
     }
 
-    // =========================
-    // CREATE
-    // =========================
     public function create()
     {
         return view('posts.create');
     }
 
-    // =========================
-    // STORE + SUCCESS MSG
-    // =========================
     public function store(Request $request)
     {
         $request->validate([
@@ -70,9 +81,40 @@ class PostController extends Controller
             ->with('success', 'Post created successfully 🎉');
     }
 
-    // =========================
-    // SOFT DELETE + MSG
-    // =========================
+    public function edit($id)
+    {
+        $post = $this->em->find(Post::class, $id);
+
+        if (!$post) {
+            return redirect()->route('posts.index')->with('error', 'Post not found');
+        }
+
+        return view('posts.edit', compact('post'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'title' => 'required',
+            'content' => 'required'
+        ]);
+
+        $post = $this->em->find(Post::class, $id);
+
+        if (!$post) {
+            return redirect()->route('posts.index')->with('error', 'Post not found');
+        }
+
+        $post->setTitle($request->title);
+        $post->setContent($request->content);
+        
+        $this->em->flush();
+
+        return redirect()
+            ->route('posts.index')
+            ->with('success', 'Post updated successfully 👍');
+    }
+
     public function destroy($id)
     {
         $post = $this->em->find(Post::class, $id);
@@ -85,25 +127,44 @@ class PostController extends Controller
         return back()->with('success', 'Moved to trash 🗑️');
     }
 
-    // =========================
-    // TRASH
-    // =========================
-    public function trash()
+    public function trash(Request $request)
     {
-        $qb = $this->em->createQueryBuilder();
+        $page = $request->query('page', 1);
+        $limit = 10;
+        $offset = ($page - 1) * $limit;
 
+        $qb = $this->em->createQueryBuilder();
         $qb->select('p')
             ->from(Post::class, 'p')
-            ->where('p.deletedAt IS NOT NULL');
+            ->where('p.deletedAt IS NOT NULL')
+            ->orderBy('p.id', 'DESC');
 
-        $posts = $qb->getQuery()->getResult();
+        if ($request->search) {
+            $qb->andWhere(
+                $qb->expr()->orX(
+                    'p.title LIKE :search',
+                    'p.content LIKE :search'
+                )
+            )
+            ->setParameter('search', '%' . $request->search . '%');
+        }
 
-        return view('posts.trash', compact('posts'));
+        $qb->setFirstResult($offset)
+           ->setMaxResults($limit);
+
+        $query = $qb->getQuery();
+        $paginator = new Paginator($query);
+        $totalItems = count($paginator);
+        $totalPages = ceil($totalItems / $limit);
+
+        $posts = [];
+        foreach ($paginator as $post) {
+            $posts[] = $post;
+        }
+
+        return view('posts.trash', compact('posts', 'page', 'totalPages', 'totalItems'));
     }
 
-    // =========================
-    // RESTORE + MSG
-    // =========================
     public function restore($id)
     {
         $post = $this->em->find(Post::class, $id);
@@ -116,9 +177,6 @@ class PostController extends Controller
         return back()->with('success', 'Post restored ♻️');
     }
 
-    // =========================
-    // FORCE DELETE + MSG
-    // =========================
     public function forceDelete($id)
     {
         $post = $this->em->find(Post::class, $id);

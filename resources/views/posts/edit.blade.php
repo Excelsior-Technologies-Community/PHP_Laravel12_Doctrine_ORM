@@ -1,32 +1,41 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
     <title>Edit Post</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            background: linear-gradient(135deg, #f5f7fa, #e4ecf7);
+        }
+    </style>
 </head>
-<body class="p-10">
+<body class="min-h-screen flex items-center justify-center p-6">
 
-<div class="max-w-xl mx-auto bg-white p-6 shadow rounded">
+    <div class="max-w-2xl w-full bg-white p-8 rounded-2xl shadow-xl border">
+        <h2 class="text-3xl font-bold mb-6 text-gray-800">Edit Post</h2>
 
-    <h2 class="text-2xl mb-4">Edit Post</h2>
-
-    <form method="POST" action="{{ route('posts.update', $post->getId()) }}">
-        @csrf
-        @method('PUT')
-
-        <input class="w-full border p-2 mb-3"
-               name="title"
-               value="{{ $post->getTitle() }}">
-
-        <textarea class="w-full border p-2 mb-3"
-                  name="content">{{ $post->getContent() }}</textarea>
-
-        <button class="bg-blue-500 text-white px-4 py-2">
-            Update
-        </button>
-    </form>
-
-</div>
+        <form method="POST" action="{{ route('posts.update', $post->getId()) }}" class="space-y-4">
+            @csrf
+            @method('PUT')
+            <div>
+                <input type="text" name="title" value="{{ $post->getTitle() }}" required
+                    class="w-full border p-3 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+                <textarea name="content" rows="5" required
+                    class="w-full border p-3 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500">{{ $post->getContent() }}</textarea>
+            </div>
+            <div class="flex gap-3 pt-2">
+                <button type="submit" class="bg-blue-600 text-white px-6 py-2.5 rounded-lg hover:bg-blue-700 font-medium shadow-md">
+                    Update
+                </button>
+                <a href="{{ route('posts.index') }}" class="bg-gray-200 text-gray-700 px-6 py-2.5 rounded-lg hover:bg-gray-300 font-medium">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
 
 </body>
 </html>
